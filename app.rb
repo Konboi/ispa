@@ -7,6 +7,11 @@ class Isucon2App < Sinatra::Base
   $stdout.sync = true
   set :slim, :pretty => true, :layout => true
 
+  configure :development do
+    Bundler.require :development
+    register Sinatra::Reloader
+  end
+
   helpers do
     def connection
       config = JSON.parse(IO.read(File.dirname(__FILE__) + "/config/common.#{ ENV['ISUCON_ENV'] || 'local' }.json"))['database']
@@ -48,15 +53,24 @@ class Isucon2App < Sinatra::Base
     artist  = mysql.query(
       "SELECT id, name FROM artist WHERE id = #{ mysql.escape(params[:artistid]) } LIMIT 1",
     ).first
+
     tickets = mysql.query(
       "SELECT id, name FROM ticket WHERE artist_id = #{ mysql.escape(artist['id'].to_s) } ORDER BY id",
     )
+
     tickets.each do |ticket|
-      ticket["count"] = mysql.query(
-        "SELECT COUNT(*) AS cnt FROM variation
-         INNER JOIN stock ON stock.variation_id = variation.id
-         WHERE variation.ticket_id = #{ mysql.escape(ticket['id'].to_s) } AND stock.order_id IS NULL",
-      ).first["cnt"]
+      master_count = 8192
+      stock_count = 0
+      valiations = mysql.query(" SELECT id FROM variation where ticket_id = #{ticket['id'].to_i}")
+
+      valiations.each do |valiation|
+        stock = mysql.query("select COUNT(*) AS cnt from stock where stock.order_id is not null AND stock.variation_id = #{valiation['id'].to_i}").first['cnt']
+        stock_count = stock_count + stock
+      end
+
+      stock = master_count - stock_count
+
+      ticket["count"] = stock
     end
     slim :artist, :locals => {
       :artist  => artist,
