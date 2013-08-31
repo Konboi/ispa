@@ -16,7 +16,7 @@ $listen = 5000
 # ---- end of config ----
 
 # Main Config for Unicorn
-worker_processes 3
+worker_processes 1
 preload_app true
 timeout $timeout
 listen $listen
