@@ -2,8 +2,8 @@
 
 PATH=~/.rbenv/bin:~/.rbenv/shims:/usr/bin:/usr/sbin:/bin:/sbin
 
-ENVIROMENT=production
-#ENVIROMENT=development
+#ENVIROMENT=production
+ENVIROMENT=development
 
 ROOT_DIR=`pwd`
 PID="${ROOT_DIR}/tmp/pids/unicorn.pid"
