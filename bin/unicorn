@@ -1,0 +1,115 @@
+#!/bin/sh
+
+PATH=~/.rbenv/bin:~/.rbenv/shims:/usr/bin:/usr/sbin:/bin:/sbin
+
+ENVIROMENT=production
+#ENVIROMENT=development
+
+ROOT_DIR=`pwd`
+PID="${ROOT_DIR}/tmp/pids/unicorn.pid"
+CONF="${ROOT_DIR}/unicorn_config.rb"
+
+
+start()
+{
+echo $ROOT_DIR
+  cd $ROOT_DIR
+    if [ -e $PID ]; then
+      echo "unicorn_rails already started";
+  exit 1;
+  fi
+    echo "start unicorn_rails";
+  bundle exec unicorn_rails -c ${CONF} -E ${ENVIROMENT} -D
+}
+
+stop()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  exit 1;
+  fi
+    echo "stop unicorn_rails";
+  kill `cat ${PID}`
+    rm -f $PID
+}
+
+graceful_stop()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  exit 1;
+  fi
+    echo "stop unicorn_rails";
+  kill -QUIT `cat ${PID}`
+    rm -f $PID
+}
+
+reload()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  start
+    exit 0;
+  fi
+    echo "reload unicorn_rails";
+  kill -USR2 `cat ${PID}`
+}
+
+restart()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  start
+    exit 0;
+  fi
+    echo "restart unicorn_rails";
+  stop
+    start
+}
+
+status()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  exit 1;
+  fi
+  ${ROOT_DIR}/lib/unicorn/scripts/status
+}
+
+clean()
+{
+  if [ ! -e $PID ]; then
+    echo "unicorn_rails not started";
+  exit 1;
+  fi
+  ${ROOT_DIR}/lib/unicorn/scripts/clean
+}
+
+
+
+case "$1" in
+start)
+start
+;;
+stop)
+stop
+;;
+graceful_stop)
+graceful_stop
+;;
+reload)
+reload
+;;
+restart)
+reload
+;;
+status)
+status
+;;
+clean)
+clean
+;;
+*)
+echo "Syntax Error: release [start|stop|graceful_stop|reload|restart|status|clean]"
+;;
+esac

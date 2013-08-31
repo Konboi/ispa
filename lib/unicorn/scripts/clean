@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+# Linux専用
+require File.expand_path('../../../../config/application', __FILE__)
+require File.expand_path('../../../../lib/unicorn/manager', __FILE__)
+
+memory_limit = (ARGV[0] && ARGV[0].to_i) || 200 # デフォルト 200MB(単位: MB)
+memory_limit = memory_limit * 1024 * 1024
+manager = UnicornManager.new
+manager.memory_usage[:worker].each do |pid, memory|
+  if memory > memory_limit
+    puts "pid: #{pid}がメモリ#{memory_limit}byteを超えたので再起動します。"
+    `kill -QUIT #{pid}`
+  end
+end
+

@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+# Linux専用
+
+require File.expand_path('../../../../config/application', __FILE__)
+require File.expand_path('../../../../lib/unicorn/manager', __FILE__)
+
+manager = UnicornManager.new
+puts "woker_count : #{manager.worker_count}"
+puts "idle_woker_count : #{manager.idle_worker_count}"
+puts "master"
+puts "  pid: #{manager.master_pid}, memory: #{manager.memory_usage[:master][manager.master_pid]/1024/1024}MB"
+puts "worker"
+manager.memory_usage[:worker].each do |pid, memory|
+  puts "  pid: #{pid}, memory: #{memory/1024/1024}MB"
+end
+
