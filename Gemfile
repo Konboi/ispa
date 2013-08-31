@@ -9,3 +9,7 @@ group :development do
   # run "bundle exec shotgun" on development
   gem 'shotgun'
 end
+
+group :development do
+  gem 'sinatra-contrib', require: 'sinatra/reloader'
+end
