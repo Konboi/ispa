@@ -108,7 +108,7 @@ class Isucon2App < Sinatra::Base
   end
 
   post '/buy' do
-    random_number = rand(4096)+1
+    random_number = rand(4096) +1
     mysql = connection
     mysql.query('BEGIN')
     mysql.query("INSERT INTO order_request (member_id) VALUES ('#{ mysql.escape(params[:member_id]) }')")
@@ -116,7 +116,7 @@ class Isucon2App < Sinatra::Base
     mysql.query(
       "UPDATE stock SET order_id = #{ mysql.escape(order_id.to_s) }
        WHERE variation_id = #{ mysql.escape(params[:variation_id]) } AND order_id IS NULL
-       LIMIT #{random_numbe}, 1",
+       ORDER BY RAND() LIMIT 1",
     )
     if mysql.affected_rows > 0
       seat_id = mysql.query(
