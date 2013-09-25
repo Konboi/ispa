@@ -6,7 +6,7 @@ require 'mysql2'
 class Isucon2App < Sinatra::Base
   $stdout.sync = true
   set :slim, :pretty => true, :layout => true
-
+  set :port , 5000
   configure :development do
     Bundler.require :development
     register Sinatra::Reloader
