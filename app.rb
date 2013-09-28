@@ -2,14 +2,29 @@ require 'sinatra/base'
 require 'slim'
 require 'json'
 require 'mysql2'
+require "redis"
 
 class Isucon2App < Sinatra::Base
   $stdout.sync = true
   set :slim, :pretty => true, :layout => true
   set :port , 5000
+
+  configure do
+    REDIS = Redis.new(
+      host: "localhost",
+      prot: 6379,
+    )
+  end
+
   configure :development do
     Bundler.require :development
     register Sinatra::Reloader
+
+  REDIS = Redis.new(
+      host: "localhost",
+      prot: 6379,
+  )
+
   end
 
   helpers do
@@ -36,16 +51,44 @@ class Isucon2App < Sinatra::Base
          ORDER BY order_id DESC LIMIT 10',
       )
     end
+
+    def is_cached
+      tag = "url:#{request.url}"
+      page = REDIS.get(tag)
+      if page
+        etag Digest::SHA1.hexdigest(page)
+        ttl = REDIS.ttl(tag)
+        response.header['redis-ttl'] = ttl.to_s
+        response.header['redis'] = 'HIT'
+        return page
+      end
+    end
+
+    def set_cache(page)
+      etag Digest::SHA1.hexdigest(page)
+      tag = "url:#{request.url}"
+      response.header['redis'] = 'MISS'
+      REDIS.setex(tag, 1, page)
+      return page
+    end
   end
 
   # main
 
   get '/' do
+    html = is_cached
+    if html
+      return html
+    end
+
     mysql = connection
     artists = mysql.query("SELECT * FROM artist ORDER BY id")
-    slim :index, :locals => {
+
+    html = slim :index, :locals => {
       :artists => artists,
     }
+
+    set_cache(html)
   end
 
   get '/artist/:artistid' do
