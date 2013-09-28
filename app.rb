@@ -115,10 +115,11 @@ class Isucon2App < Sinatra::Base
 
       ticket["count"] = stock
     end
-    slim :artist, :locals => {
+    html = slim :artist, :locals => {
       :artist  => artist,
       :tickets => tickets,
     }
+    set_cache(html)
   end
 
   get '/ticket/:ticketid' do
@@ -144,10 +145,11 @@ class Isucon2App < Sinatra::Base
         variation["stock"][stock["seat_id"]] = stock["order_id"]
       end
     end
-    slim :ticket, :locals => {
+    html = slim :ticket, :locals => {
       :ticket     => ticket,
       :variations => variations,
     }
+    set_cache(html)
   end
 
   post '/buy' do
@@ -164,11 +166,12 @@ class Isucon2App < Sinatra::Base
         "SELECT seat_id FROM stock WHERE order_id = #{ mysql.escape(order_id.to_s) } LIMIT 1",
       ).first['seat_id']
       mysql.query('COMMIT')
-      slim :complete, :locals => { :seat_id => seat_id, :member_id => params[:member_id] }
+      html = slim :complete, :locals => { :seat_id => seat_id, :member_id => params[:member_id] }
     else
       mysql.query('ROLLBACK')
-      slim :soldout
+      html = slim :soldout
     end
+    set_cache(html)
   end
 
   # admin
